@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-brand-50: #effaf8;
+  --color-brand-100: #d5f2ec;
+  --color-brand-200: #abe4d9;
+  --color-brand-500: #14907f;
+  --color-brand-600: #0f766e;
+  --color-brand-700: #0d5f59;
+  --color-ink: #1c1f23;
+  --color-muted: #64686f;
+  --color-line: #e4e2dd;
+  --color-canvas: #f6f5f2;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures for counts and amounts */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}

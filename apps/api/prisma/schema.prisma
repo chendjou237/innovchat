@@ -1,0 +1,529 @@
+// Data model — SRS v1.1 §4. All ids are UUIDs; every table has created_at/updated_at.
+
+generator client {
+  provider      = "prisma-client-js"
+  // native for development; debian-openssl-3.0.x for the Docker image (node:22-bookworm-slim)
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum StudentStatus {
+  ACTIVE
+  LEFT
+  ARCHIVED
+}
+
+enum EnrolmentOutcome {
+  PROMOTED
+  REPEATING
+  LEFT
+}
+
+enum AnomalyType {
+  ABSENCE
+  TARDINESS
+}
+
+enum EventType {
+  HOLIDAY
+  MEETING
+  EXAM
+  EVENT
+}
+
+enum TemplatePurpose {
+  TARDINESS
+  ABSENCE
+  PAYMENT
+  CALENDAR
+  GENERAL
+}
+
+enum MetaCategory {
+  UTILITY
+  MARKETING
+  AUTHENTICATION
+}
+
+enum MetaStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  PAUSED
+  DISABLED
+}
+
+enum DispatchSource {
+  MANUAL
+  ATTENDANCE
+  CALENDAR
+  FEE_RULE
+}
+
+enum DispatchStatus {
+  AWAITING_CONFIRMATION
+  SCHEDULED
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_FAILURES
+  CANCELLED
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  RETRY_PENDING
+  FAILED
+}
+
+enum NotificationType {
+  DISPATCH_FAILURES
+  AWAITING_CONFIRMATION
+  TEMPLATE_REJECTED
+  IMPORT_DONE
+}
+
+enum ImportKind {
+  STUDENTS
+  PAYMENTS
+}
+
+enum ImportStatus {
+  PREVIEW
+  COMMITTED
+  CANCELLED
+}
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String    @map("full_name")
+  role         UserRole  @default(ADMIN)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_user")
+}
+
+model AcademicYear {
+  id        String   @id @default(uuid()) @db.Uuid
+  label     String   @unique
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isActive  Boolean  @default(false) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  classes      Class[]
+  enrolments   Enrolment[]
+  installments FeeInstallment[]
+
+  @@map("academic_year")
+}
+
+model Department {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  classes Class[]
+
+  @@map("department")
+}
+
+model Class {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  level          String   @default("")
+  academicYearId String   @map("academic_year_id") @db.Uuid
+  departmentId   String   @map("department_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  department   Department   @relation(fields: [departmentId], references: [id])
+  enrolments   Enrolment[]
+
+  @@unique([academicYearId, name])
+  @@map("class")
+}
+
+model Subject {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  anomalies AttendanceAnomaly[]
+
+  @@map("subject")
+}
+
+model Student {
+  id        String        @id @default(uuid()) @db.Uuid
+  matricule String        @unique
+  firstName String        @map("first_name")
+  lastName  String        @map("last_name")
+  status    StudentStatus @default(ACTIVE)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  enrolments Enrolment[]
+  contacts   ParentContact[]
+  messages   Message[]
+
+  @@index([lastName, firstName])
+  @@map("student")
+}
+
+model Enrolment {
+  id             String            @id @default(uuid()) @db.Uuid
+  studentId      String            @map("student_id") @db.Uuid
+  classId        String            @map("class_id") @db.Uuid
+  academicYearId String            @map("academic_year_id") @db.Uuid
+  outcome        EnrolmentOutcome?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  student      Student             @relation(fields: [studentId], references: [id])
+  class        Class               @relation(fields: [classId], references: [id])
+  academicYear AcademicYear        @relation(fields: [academicYearId], references: [id])
+  anomalies    AttendanceAnomaly[]
+  fees         StudentFee[]
+
+  @@unique([studentId, academicYearId])
+  @@index([classId])
+  @@map("enrolment")
+}
+
+model ParentContact {
+  id           String    @id @default(uuid()) @db.Uuid
+  studentId    String    @map("student_id") @db.Uuid
+  name         String
+  relationship String    @default("")
+  // AES-256-GCM ciphertext of the E.164 number (NFR-12).
+  phoneE164    String    @map("phone_e164")
+  // Keyed HMAC of the E.164 number for exact search and duplicate checks (§4.3).
+  phoneHash    String    @map("phone_hash")
+  phoneMasked  String    @map("phone_masked")
+  consentAt    DateTime? @map("consent_at") @db.Date
+  isOptedOut   Boolean   @default(false) @map("is_opted_out")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  student  Student   @relation(fields: [studentId], references: [id])
+  messages Message[]
+
+  @@index([phoneHash])
+  @@index([studentId])
+  @@map("parent_contact")
+}
+
+model AttendanceAnomaly {
+  id                String      @id @default(uuid()) @db.Uuid
+  enrolmentId       String      @map("enrolment_id") @db.Uuid
+  type              AnomalyType
+  date              DateTime    @db.Date
+  subjectId         String?     @map("subject_id") @db.Uuid
+  timeSlot          String?     @map("time_slot")
+  arrivalTime       String?     @map("arrival_time")
+  note              String?
+  isJustified       Boolean     @default(false) @map("is_justified")
+  justificationNote String?     @map("justification_note")
+  recordedBy        String?     @map("recorded_by") @db.Uuid
+  // The draft alert: a DISPATCH of source ATTENDANCE (FR-ATT-004).
+  messageDispatchId String?     @unique @map("message_dispatch_id") @db.Uuid
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  enrolment Enrolment @relation(fields: [enrolmentId], references: [id])
+  subject   Subject?  @relation(fields: [subjectId], references: [id])
+  dispatch  Dispatch? @relation(fields: [messageDispatchId], references: [id])
+
+  @@index([date])
+  @@index([enrolmentId])
+  @@map("attendance_anomaly")
+}
+
+model CalendarEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  title           String
+  type            EventType
+  startDate       DateTime  @map("start_date") @db.Date
+  endDate         DateTime  @map("end_date") @db.Date
+  startTime       String?   @map("start_time")
+  place           String?
+  description     String?
+  recipientFilter Json      @map("recipient_filter")
+  templateId      String?   @map("template_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  triggers EventTrigger[]
+
+  @@index([startDate])
+  @@map("calendar_event")
+}
+
+model EventTrigger {
+  id         String   @id @default(uuid()) @db.Uuid
+  eventId    String   @map("event_id") @db.Uuid
+  daysOffset Int      @map("days_offset")
+  sendTime   String   @map("send_time")
+  dispatchId String?  @unique @map("dispatch_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  event    CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  dispatch Dispatch?     @relation(fields: [dispatchId], references: [id])
+
+  @@map("event_trigger")
+}
+
+model FeeInstallment {
+  id               String   @id @default(uuid()) @db.Uuid
+  academicYearId   String   @map("academic_year_id") @db.Uuid
+  name             String
+  dueDate          DateTime @map("due_date") @db.Date
+  defaultAmountXaf Int      @map("default_amount_xaf")
+  classAmounts     Json     @default("{}") @map("class_amounts")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  academicYear AcademicYear      @relation(fields: [academicYearId], references: [id])
+  studentFees  StudentFee[]
+  rules        FeeReminderRule[]
+
+  @@unique([academicYearId, name])
+  @@map("fee_installment")
+}
+
+model StudentFee {
+  id            String   @id @default(uuid()) @db.Uuid
+  enrolmentId   String   @map("enrolment_id") @db.Uuid
+  installmentId String   @map("installment_id") @db.Uuid
+  amountDueXaf  Int      @map("amount_due_xaf")
+  // true when the Administrator set an individual amount (FR-FEE-002).
+  isOverride    Boolean  @default(false) @map("is_override")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  enrolment   Enrolment      @relation(fields: [enrolmentId], references: [id])
+  installment FeeInstallment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+
+  @@unique([enrolmentId, installmentId])
+  @@index([installmentId])
+  @@map("student_fee")
+}
+
+model Payment {
+  id           String   @id @default(uuid()) @db.Uuid
+  studentFeeId String   @map("student_fee_id") @db.Uuid
+  amountXaf    Int      @map("amount_xaf")
+  paidOn       DateTime @map("paid_on") @db.Date
+  reference    String?
+  importJobId  String?  @map("import_job_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  studentFee StudentFee @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
+  importJob  ImportJob? @relation(fields: [importJobId], references: [id])
+
+  @@index([studentFeeId])
+  @@map("payment")
+}
+
+model FeeReminderRule {
+  id              String   @id @default(uuid()) @db.Uuid
+  installmentId   String   @map("installment_id") @db.Uuid
+  daysOffset      Int      @map("days_offset")
+  sendTime        String   @map("send_time")
+  recipientFilter Json     @map("recipient_filter")
+  isEnabled       Boolean  @default(false) @map("is_enabled")
+  dispatchId      String?  @unique @map("dispatch_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  installment FeeInstallment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
+  dispatch    Dispatch?      @relation(fields: [dispatchId], references: [id])
+
+  @@map("fee_reminder_rule")
+}
+
+model MessageTemplate {
+  id           String          @id @default(uuid()) @db.Uuid
+  title        String
+  metaName     String          @map("meta_name")
+  language     String          @default("fr")
+  metaCategory MetaCategory    @map("meta_category")
+  purpose      TemplatePurpose
+  bodyPreview  String          @map("body_preview")
+  // Ordered list of system field keys: parameter_map[0] fills {{1}} (FR-TPL-003).
+  parameterMap Json            @default("[]") @map("parameter_map")
+  metaStatus   MetaStatus      @default(PENDING) @map("meta_status")
+  lastSyncedAt DateTime?       @map("last_synced_at")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  dispatches Dispatch[]
+
+  @@unique([metaName, language])
+  @@map("message_template")
+}
+
+model Dispatch {
+  id               String          @id @default(uuid()) @db.Uuid
+  title            String          @default("")
+  templateId       String          @map("template_id") @db.Uuid
+  purpose          TemplatePurpose
+  source           DispatchSource
+  recipientFilter  Json            @map("recipient_filter")
+  fixedParameters  Json            @default("{}") @map("fixed_parameters")
+  status           DispatchStatus
+  scheduledFor     DateTime?       @map("scheduled_for")
+  startedAt        DateTime?       @map("started_at")
+  // Set once MESSAGE rows have been created for this dispatch.
+  materializedAt   DateTime?       @map("materialized_at")
+  completedAt      DateTime?       @map("completed_at")
+  estimatedCostXaf Int             @default(0) @map("estimated_cost_xaf")
+  studentsCount    Int             @default(0) @map("students_count")
+  messagesCount    Int             @default(0) @map("messages_count")
+  cancelReason     String?         @map("cancel_reason")
+  createdBy        String?         @map("created_by") @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  template     MessageTemplate    @relation(fields: [templateId], references: [id])
+  messages     Message[]
+  anomaly      AttendanceAnomaly?
+  eventTrigger EventTrigger?
+  feeRule      FeeReminderRule?
+
+  @@index([status, scheduledFor])
+  @@index([createdAt])
+  @@map("dispatch")
+}
+
+model Message {
+  id                 String        @id @default(uuid()) @db.Uuid
+  dispatchId         String        @map("dispatch_id") @db.Uuid
+  studentId          String        @map("student_id") @db.Uuid
+  parentContactId    String        @map("parent_contact_id") @db.Uuid
+  // Encrypted copy of the number used for this message (NFR-12).
+  phoneE164          String        @map("phone_e164")
+  phoneMasked        String        @map("phone_masked")
+  renderedParameters Json          @map("rendered_parameters")
+  wamid              String?
+  status             MessageStatus @default(QUEUED)
+  attemptCount       Int           @default(0) @map("attempt_count")
+  nextAttemptAt      DateTime?     @map("next_attempt_at")
+  // Send lock: a worker owns the message until this instant (NFR-08).
+  lockedUntil        DateTime?     @map("locked_until")
+  errorCode          String?       @map("error_code")
+  errorMessage       String?       @map("error_message")
+  sentAt             DateTime?     @map("sent_at")
+  deliveredAt        DateTime?     @map("delivered_at")
+  readAt             DateTime?     @map("read_at")
+  failedAt           DateTime?     @map("failed_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  dispatch Dispatch      @relation(fields: [dispatchId], references: [id])
+  student  Student       @relation(fields: [studentId], references: [id])
+  contact  ParentContact @relation(fields: [parentContactId], references: [id])
+
+  // One message per dispatch, student and contact — never sent twice (NFR-08).
+  @@unique([dispatchId, studentId, parentContactId])
+  @@index([wamid])
+  @@index([status])
+  @@index([studentId])
+  @@map("message")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  type      NotificationType
+  title     String
+  link      String           @default("")
+  // Groups updates of the same subject (e.g. one notification per dispatch).
+  groupKey  String?          @unique @map("group_key")
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@index([isRead, createdAt])
+  @@map("notification")
+}
+
+model ImportJob {
+  id           String       @id @default(uuid()) @db.Uuid
+  kind         ImportKind
+  fileName     String       @map("file_name")
+  status       ImportStatus @default(PREVIEW)
+  rowsTotal    Int          @default(0) @map("rows_total")
+  rowsCreated  Int          @default(0) @map("rows_created")
+  rowsUpdated  Int          @default(0) @map("rows_updated")
+  rowsFailed   Int          @default(0) @map("rows_failed")
+  // Validated rows kept between preview and commit.
+  preview      Json         @default("{}")
+  errorFile    Bytes?       @map("error_file")
+  createdBy    String?      @map("created_by") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  payments Payment[]
+
+  @@map("import_job")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  payload   Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@map("audit_log")
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  isSecret  Boolean  @default(false) @map("is_secret")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("setting")
+}
+
+model WebhookEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  body        Json
+  processedAt DateTime? @map("processed_at")
+  error       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("webhook_event")
+}
