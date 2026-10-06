@@ -33,7 +33,7 @@ function serveWeb(a: NestExpressApplication) {
   const index = join(dir, 'index.html');
   // Client-side routes (/eleves, /historique/…) fall back to index.html.
   a.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
+    if ((req.method !== 'GET' && req.method !== 'HEAD') || req.path.startsWith('/api/')) return next();
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(index);
   });
