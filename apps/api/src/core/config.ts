@@ -6,6 +6,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
   WEB_ORIGIN: z.string().default('http://localhost:5173'),
+  // Built dashboard to serve from the API (single-origin deployments).
+  WEB_DIST_DIR: z.string().optional(),
   ENCRYPTION_KEY: z.string().min(1),
   PHONE_HASH_KEY: z.string().min(1),
   WHATSAPP_PROVIDER: z.enum(['mock', 'graph']).default('mock'),
