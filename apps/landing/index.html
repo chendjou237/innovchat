@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Innovcare — Les parents informés sur WhatsApp</title>
+<meta name="description" content="Innovcare prévient les parents sur WhatsApp des absences, retards, frais scolaires et événements de l’école. Simple pour l’administration, fiable pour les familles." />
+<meta property="og:title" content="Innovcare — Les parents informés sur WhatsApp" />
+<meta property="og:description" content="Absences, retards, frais scolaires et événements : chaque parent reçoit le bon message, au bon moment, sur WhatsApp." />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand: #0f766e; --brand-dark: #0d5f59; --brand-soft: #effaf8; --brand-line: #abe4d9;
+    --ink: #1c1f23; --muted: #5d6168; --line: #e4e2dd; --canvas: #f6f5f2; --white: #fff;
+    --chat: #efeae2; --amber: #b45309; --amber-soft: #fef3c7;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--canvas); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  /* Nav */
+  nav { position: sticky; top: 0; z-index: 10; background: rgba(246,245,242,.88); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; text-decoration: none; letter-spacing: -.01em; }
+  .logo svg { width: 30px; height: 30px; }
+  .nav-links { display: flex; align-items: center; gap: 26px; font-size: 14.5px; }
+  .nav-links a { text-decoration: none; color: var(--muted); }
+  .nav-links a:hover { color: var(--ink); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 20px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; transition: background .15s, transform .15s; white-space: nowrap; }
+  .btn-primary { background: var(--brand); color: #fff !important; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-ghost { background: var(--white); border: 1px solid var(--line); color: var(--ink) !important; }
+  .btn-ghost:hover { background: #fbfaf8; }
+  .btn-sm { height: 38px; padding: 0 14px; font-size: 14px; }
+
+  /* Hero */
+  .hero { padding: 72px 0 80px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--brand-dark); background: var(--brand-soft); border: 1px solid var(--brand-line); padding: 5px 12px; border-radius: 999px; }
+  h1 { font-size: clamp(36px, 5.2vw, 58px); line-height: 1.05; letter-spacing: -.035em; font-weight: 700; margin: 20px 0 18px; }
+  h1 em { font-style: normal; color: var(--brand); }
+  .lead { font-size: 18.5px; color: var(--muted); max-width: 540px; }
+  .hero-cta { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+  .hero-note { margin-top: 18px; font-size: 13.5px; color: var(--muted); }
+
+  /* Phone mock */
+  .phone { background: #1c1f23; border-radius: 38px; padding: 12px; max-width: 360px; margin: 0 auto; box-shadow: 0 30px 60px -20px rgba(15,60,55,.35), 0 0 0 1px rgba(0,0,0,.05); }
+  .screen { background: var(--chat); border-radius: 28px; overflow: hidden; }
+  .chat-head { background: #0b5a54; color: #fff; display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+  .avatar svg { width: 20px; height: 20px; }
+  .chat-head b { display: block; font-size: 14.5px; }
+  .chat-head small { font-size: 11.5px; opacity: .8; }
+  .chat { padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 430px; }
+  .day { align-self: center; font-size: 11px; background: #fff; color: var(--muted); padding: 3px 10px; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,.05); }
+  .bubble { background: #fff; border-radius: 10px; border-top-left-radius: 2px; padding: 9px 11px 6px; font-size: 13.2px; line-height: 1.45; max-width: 92%; box-shadow: 0 1px 1px rgba(0,0,0,.06); opacity: 0; transform: translateY(8px); animation: pop .5s ease forwards; }
+  .bubble:nth-of-type(2) { animation-delay: .4s; }
+  .bubble:nth-of-type(3) { animation-delay: 1.1s; }
+  .bubble:nth-of-type(4) { animation-delay: 1.8s; }
+  .bubble .tag { display: block; font-size: 11px; font-weight: 600; color: var(--brand); margin-bottom: 2px; }
+  .bubble .tag.amber { color: var(--amber); }
+  .bubble time { display: block; text-align: right; font-size: 10.5px; color: #8a8f96; margin-top: 2px; }
+  .bubble time::after { content: " ✓✓"; color: #34b7f1; }
+  @keyframes pop { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .bubble { animation: none; opacity: 1; transform: none; } }
+
+  /* Sections */
+  section { padding: 84px 0; }
+  .sec-head { max-width: 640px; margin-bottom: 44px; }
+  .sec-head .kicker { font-size: 13px; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .08em; }
+  h2 { font-size: clamp(28px, 3.6vw, 40px); line-height: 1.12; letter-spacing: -.03em; margin: 10px 0 12px; }
+  .sec-head p { color: var(--muted); font-size: 17px; }
+
+  .stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--white); padding: 0; }
+  .stats .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .stat { padding: 28px 20px; border-left: 1px solid var(--line); }
+  .stat:first-child { border-left: 0; }
+  .stat b { display: block; font-size: 30px; letter-spacing: -.03em; color: var(--brand); }
+  .stat span { font-size: 14px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+  .card .ico { width: 42px; height: 42px; border-radius: 11px; background: var(--brand-soft); display: grid; place-items: center; margin-bottom: 16px; }
+  .card .ico svg { width: 22px; height: 22px; stroke: var(--brand); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 17px; letter-spacing: -.01em; margin-bottom: 6px; }
+  .card p { color: var(--muted); font-size: 15px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; counter-reset: step; }
+  .step { position: relative; padding: 26px 24px; background: var(--white); border: 1px solid var(--line); border-radius: 16px; }
+  .step::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; font-size: 14px; margin-bottom: 16px; }
+  .step h3 { font-size: 17px; margin-bottom: 6px; }
+  .step p { color: var(--muted); font-size: 15px; }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .checks { list-style: none; padding: 0; display: grid; gap: 14px; margin-top: 22px; }
+  .checks li { display: flex; gap: 12px; font-size: 15.5px; }
+  .checks li::before { content: ""; flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3.2 3L15 7' fill='none' stroke='%230f766e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat; margin-top: 1px; }
+  .panel { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: 0 20px 40px -24px rgba(0,0,0,.18); }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 14px; }
+  .alert-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .alert-row:first-of-type { border-top: 0; }
+  .pill { font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+  .pill.green { background: #ecfdf5; color: #065f46; }
+  .pill.amber { background: var(--amber-soft); color: var(--amber); }
+  .pill.teal { background: var(--brand-soft); color: var(--brand-dark); }
+  .muted { color: var(--muted); }
+
+  .cta { background: var(--ink); color: #fff; border-radius: 24px; padding: 56px 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  .cta h2 { color: #fff; margin: 0 0 8px; }
+  .cta p { color: #c9ccd1; font-size: 17px; max-width: 520px; }
+  .cta .btn-ghost { background: transparent; color: #fff !important; border-color: #3d4249; }
+
+  footer { padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 28px; }
+  footer nav { all: unset; display: flex; gap: 20px; }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--ink); text-decoration: underline; }
+
+  @media (max-width: 900px) {
+    .hero .wrap, .split { grid-template-columns: 1fr; }
+    .hero { padding: 44px 0 56px; }
+    .grid, .steps { grid-template-columns: 1fr 1fr; }
+    .stats .wrap { grid-template-columns: 1fr 1fr; }
+    .stat:nth-child(3) { border-left: 0; }
+    .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .nav-links a:not(.btn) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 0 16px; }
+    .grid, .steps { grid-template-columns: 1fr; }
+    section { padding: 60px 0; }
+    .cta { padding: 36px 24px; }
+    .hero-cta .btn { flex: 1; }
+    .lead { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0f766e"/><path d="M9 11h14v9H14l-5 4z" fill="#fff"/></svg>
+      Innovcare
+    </a>
+    <div class="nav-links">
+      <a href="#fonctionnalites">Fonctionnalités</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="#confiance">Sécurité</a>
+      <a class="btn btn-primary btn-sm" href="https://innovcare-qm05s.sevalla.app/">Espace école</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">● Conçu pour les écoles du Cameroun</span>
+      <h1>Chaque parent informé, <em>directement sur WhatsApp.</em></h1>
+      <p class="lead">Absences, retards, frais scolaires, réunions : Innovcare envoie aux familles le bon message, au bon moment, sur l’application qu’elles utilisent déjà. L’administration garde la main sur chaque envoi.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://innovcare-qm05s.sevalla.app/">Accéder à l’espace école</a>
+        <a class="btn btn-ghost" href="#fonctionnalites">Découvrir</a>
+      </div>
+      <p class="hero-note">Aucune application à installer pour les parents · Interface 100 % en français</p>
+    </div>
+
+    <div class="phone" aria-label="Exemple de messages reçus par un parent">
+      <div class="screen">
+        <div class="chat-head">
+          <div class="avatar"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#0f766e"/><path d="M9 11h14v9H14l-5 4z" fill="#fff"/></svg></div>
+          <div><b>Collège de votre enfant</b><small>Compte professionnel</small></div>
+        </div>
+        <div class="chat">
+          <span class="day">AUJOURD’HUI</span>
+          <div class="bubble"><span class="tag amber">Retard</span>Bonjour Mme Ngono, votre enfant Awa Ngono (4e B) est arrivée en retard aujourd’hui à 07h45.<time>07:52</time></div>
+          <div class="bubble"><span class="tag">Frais scolaires</span>Le solde de la 2e tranche d’Awa s’élève à 25 000 FCFA, à régler avant le 15/01. Si vous avez déjà payé, merci de ne pas tenir compte de ce message.<time>08:00</time></div>
+          <div class="bubble"><span class="tag">Calendrier</span>Réunion des parents : samedi 14 novembre à 10h00, salle polyvalente.<time>08:00</time></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="wrap">
+    <div class="stat"><b>3</b><span>nouveaux essais automatiques si un message n’arrive pas</span></div>
+    <div class="stat"><b>0</b><span>application à installer pour les familles</span></div>
+    <div class="stat"><b>1 clic</b><span>pour cibler toute l’école, une classe ou un seul élève</span></div>
+    <div class="stat"><b>100 %</b><span>des envois tracés : distribué, lu ou en échec</span></div>
+  </div>
+</div>
+
+<section id="fonctionnalites">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Fonctionnalités</span>
+      <h2>Tout ce qu’une école doit dire aux parents, au même endroit.</h2>
+      <p>Innovcare part des informations que vous saisissez déjà et les transforme en messages WhatsApp clairs, en français.</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Absences et retards</h3>
+        <p>Cochez les élèves concernés, relisez le message, confirmez. Les parents sont prévenus en quelques minutes.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg></div>
+        <h3>Rappels de frais</h3>
+        <p>Seuls les parents qui ont un solde reçoivent un rappel, avec le montant exact de leur enfant. Les élèves à jour ne sont jamais relancés.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></div>
+        <h3>Calendrier automatique</h3>
+        <p>Créez une réunion ou un examen : les rappels partent seuls, 7 jours avant puis le jour même. Changez la date, les rappels suivent.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+        <h3>Envois ciblés</h3>
+        <p>Toute l’école, un cycle, quelques classes ou des élèves choisis un par un. Le nombre de messages et le coût s’affichent avant l’envoi.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></div>
+        <h3>Suivi de chaque message</h3>
+        <p>Envoyé, distribué, lu ou en échec : vous savez qui a reçu quoi. Un numéro erroné se corrige et se renvoie en un clic.</p>
+      </div>
+      <div class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg></div>
+        <h3>Import Excel</h3>
+        <p>Importez élèves, parents et paiements depuis Excel. Le fichier est vérifié ligne par ligne avant tout enregistrement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="comment" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Comment ça marche</span>
+      <h2>Opérationnel en une journée.</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Importez votre école</h3><p>Classes, élèves et numéros WhatsApp des parents depuis un fichier Excel. Les numéros sont vérifiés et normalisés automatiquement.</p></div>
+      <div class="step"><h3>Saisissez au quotidien</h3><p>Absences, retards, paiements et événements, comme d’habitude. Innovcare prépare les messages correspondants.</p></div>
+      <div class="step"><h3>Validez et envoyez</h3><p>Vous relisez, vous confirmez : les parents reçoivent le message sur WhatsApp. Rien ne part sans votre accord.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="confiance" style="background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap split">
+    <div>
+      <span class="kicker" style="font-size:13px;font-weight:600;color:var(--brand);text-transform:uppercase;letter-spacing:.08em">Confiance</span>
+      <h2>Les données des familles restent protégées.</h2>
+      <p class="muted" style="font-size:17px">Innovcare utilise la plateforme officielle WhatsApp Business de Meta, avec des modèles de messages approuvés.</p>
+      <ul class="checks">
+        <li>Numéros des parents chiffrés dans la base de données</li>
+        <li>Consentement des parents enregistré, désinscription respectée à chaque envoi</li>
+        <li>Chaque action tracée : qui a envoyé, confirmé ou importé, et quand</li>
+        <li>Aucune revente de données, aucune publicité</li>
+      </ul>
+    </div>
+    <div class="panel" aria-label="Aperçu de l’espace administrateur">
+      <div class="panel-title">Envois de la semaine</div>
+      <div class="alert-row"><span>Absences — 4e B<br><small class="muted">3 parents · Mathématiques</small></span><span class="pill green">Distribué</span></div>
+      <div class="alert-row"><span>Rappel 2e tranche<br><small class="muted">186 parents · soldes impayés uniquement</small></span><span class="pill teal">En cours</span></div>
+      <div class="alert-row"><span>Réunion des parents<br><small class="muted">Premier cycle · samedi 08:00</small></span><span class="pill amber">Programmé</span></div>
+      <div class="alert-row"><span>Retards — 6e A<br><small class="muted">2 alertes à confirmer</small></span><span class="pill amber">À confirmer</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <div>
+        <h2>Prêt à mieux informer vos familles ?</h2>
+        <p>Connectez-vous à l’espace de votre école pour importer vos classes et envoyer vos premiers messages.</p>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a class="btn btn-primary" href="https://innovcare-qm05s.sevalla.app/">Accéder à l’espace école</a>
+        <a class="btn btn-ghost" href="https://innovcare-qm05s.sevalla.app/confidentialite">Confidentialité</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="y">2026</span> Innovcare</span>
+    <nav>
+      <a href="https://innovcare-qm05s.sevalla.app/confidentialite">Politique de confidentialité</a>
+      <a href="https://innovcare-qm05s.sevalla.app/">Espace école</a>
+    </nav>
+  </div>
+</footer>
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
