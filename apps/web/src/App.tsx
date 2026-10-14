@@ -11,6 +11,7 @@ import History, { HistoryDetail } from './pages/History';
 import ImportPage from './pages/Import';
 import Login from './pages/Login';
 import NewDispatch from './pages/NewDispatch';
+import Privacy from './pages/Privacy';
 import Promotion from './pages/Promotion';
 import Scheduled from './pages/Scheduled';
 import Settings from './pages/Settings';
@@ -54,7 +55,11 @@ export default function App() {
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <Shell />
+          <Routes>
+            {/* Public: readable without an account (also the privacy URL given to Meta). */}
+            <Route path="confidentialite" element={<Privacy />} />
+            <Route path="*" element={<Shell />} />
+          </Routes>
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>

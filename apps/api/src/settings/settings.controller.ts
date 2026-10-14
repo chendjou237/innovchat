@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Put } from '@nestjs/common';
 import { SettingsInput, settingsSchema } from '@innovcare/shared';
-import { CurrentUser } from '../auth/auth.guard';
+import { CurrentUser, Public } from '../auth/auth.guard';
 import type { SessionUser } from '../auth/auth.service';
 import { AuditService } from '../core/audit.service';
 import { ZodPipe } from '../core/zod.pipe';
@@ -24,5 +24,18 @@ export class SettingsController {
     // Never log secret values.
     await this.audit.log(me.id, 'UPDATE', 'setting', null, { keys: Object.keys(body) });
     return this.settings.publicView();
+  }
+}
+
+/** School identity shown on public pages (privacy policy). Nothing else is exposed. */
+@Public()
+@Controller('public')
+export class PublicInfoController {
+  constructor(private readonly settings: SettingsService) {}
+
+  @Get('school')
+  async school() {
+    const s = await this.settings.school();
+    return { name: s.name, phone: s.phone };
   }
 }

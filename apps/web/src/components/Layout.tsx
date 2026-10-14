@@ -89,6 +89,9 @@ export default function Layout() {
             </div>
           ))}
         </nav>
+        <a href="/confidentialite" target="_blank" rel="noreferrer" className="mt-6 block px-2 text-[12px] text-stone-400 hover:text-ink hover:underline">
+          Politique de confidentialité
+        </a>
       </aside>
       {menuOpen && <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setMenuOpen(false)} />}
 

@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { Link } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, ErrorNote, Field, Input } from '../components/ui';
 import { api } from '../lib/api';
@@ -47,6 +48,11 @@ export default function Login() {
             Se connecter
           </Button>
         </form>
+        <p className="mt-4 text-center text-[13px] text-muted">
+          <Link to="/confidentialite" className="hover:text-ink hover:underline">
+            Politique de confidentialité
+          </Link>
+        </p>
       </div>
     </div>
   );

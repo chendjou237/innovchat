@@ -13,7 +13,7 @@ import { NotificationsController } from './notifications/notifications.controlle
 import { AcademicYearsController, ClassesController, DepartmentsController, SubjectsController } from './org/org.controller';
 import { PromotionsController } from './promotions/promotions.controller';
 import { ReportsController } from './reports/reports.controller';
-import { SettingsController } from './settings/settings.controller';
+import { PublicInfoController, SettingsController } from './settings/settings.controller';
 import { StudentsController } from './students/students.controller';
 import { TemplatesController } from './templates/templates.controller';
 import { WebhooksController } from './webhooks/webhooks.controller';
@@ -34,6 +34,7 @@ class HealthController {
     AuthController,
     AdminsController,
     SettingsController,
+    PublicInfoController,
     AcademicYearsController,
     DepartmentsController,
     ClassesController,
